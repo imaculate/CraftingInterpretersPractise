@@ -1,0 +1,46 @@
+var a = "global";
+{
+  fun showA() {
+    print a;
+  }
+
+  showA();
+  var a = "block";
+  showA();
+}
+
+class DevonShireCream {
+    serveOn() {
+        return "Scones";
+    }
+}
+
+print DevonShireCream;
+
+class Bagel {}
+var bagel = Bagel();
+print bagel;
+
+class Bacon {
+  eat() {
+    print "Crunch crunch crunch!";
+  }
+}
+
+Bacon().eat();
+
+
+class Foo {
+  init() {
+    return;
+  }
+}
+
+class Math {
+  class square(n) {
+    // var x = this;
+    return n * n;
+  }
+}
+
+print Math.square(3);
