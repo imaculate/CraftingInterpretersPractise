@@ -72,20 +72,25 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Void visitClassStmt(Stmt.Class stmt)
     {
         Object superclass = null;
-        if (stmt.superclass != null) {
-          superclass = evaluate(stmt.superclass);
-          if (!(superclass instanceof LoxClass)) {
-            throw new RunTimeError(stmt.superclass.name,
-                "Superclass must be a class.");
-          }
+        List<LoxClass> superclasses = new ArrayList<>();
+        if (!stmt.superclasses.isEmpty()) {
+            for (Expr.Variable superClass : stmt.superclasses)
+            {
+                superclass = evaluate(superClass);
+                if (!(superclass instanceof LoxClass)) {
+                    throw new RunTimeError(superClass.name,
+                        "Superclass must be a class.");
+                }
+                superclasses.add((LoxClass)superclass);
+            }
         }
 
         environment.define(stmt.name.lexeme, null);
 
-        if (stmt.superclass != null)
+        if (!stmt.superclasses.isEmpty())
         {
             environment = new Environment(environment);
-            environment.define("super", superclass);
+            environment.define("super", (Object)superclasses);
         }
 
         Map<String, LoxFunction> methods = new HashMap<>();
@@ -95,8 +100,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             methods.put(method.name.lexeme, function);
         }
 
-        LoxClass klass = new LoxClass(stmt.name.lexeme, (LoxClass)superclass, methods);
-        if (superclass != null)
+        LoxClass klass = new LoxClass(stmt.name.lexeme, superclasses, methods);
+        if (!superclasses.isEmpty())
         {
             environment = environment.enclosing;
         }
@@ -412,9 +417,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitSuperExpr(Expr.Super expr)
     {
         int distance = locals.get(expr);
-        LoxClass superClass = (LoxClass)environment.getAt(distance, "super");
         LoxInstance object = (LoxInstance)environment.getAt(distance-1, "this");
-        LoxFunction method = superClass.findMethod(expr.method.lexeme);
+        List<LoxClass> superClasses = (List<LoxClass>)environment.getAt(distance, "super");
+        LoxFunction method = null;
+        for (LoxClass superClass : superClasses)
+        {
+            method = superClass.findMethod(expr.method.lexeme);
+            if (method != null) break;
+        }
+        
         if (method == null)
         {
             throw new RunTimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");

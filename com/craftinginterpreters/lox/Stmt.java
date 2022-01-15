@@ -155,13 +155,13 @@ public abstract class Stmt {
     public static class Class extends Stmt
     {
       public Token name;
-      public Expr.Variable superclass;
+      public List<Expr.Variable> superclasses;
       public List<Stmt.Function> methods;
       
-      public Class(Token name, Expr.Variable superclass, List<Stmt.Function> methods)
+      public Class(Token name, List<Expr.Variable> superclasses, List<Stmt.Function> methods)
       {
         this.name = name;
-        this.superclass = superclass;
+        this.superclasses = superclasses;
         this.methods = methods;
       }
 

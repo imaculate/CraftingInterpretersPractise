@@ -43,14 +43,21 @@ class B < A {
   }
 }
 
-class C < B {}
-
-C().test();
-
-super.notEvenInAClass();
-class Eclair {
-  cook() {
-    super.cook();
-    print "Pipe full of crème pâtissière.";
+class D
+{
+  test2() {
+    print "Testing from D";
   }
 }
+
+class C < B,D {}
+
+C().test2();
+
+// super.notEvenInAClass();
+// class Eclair {
+//  cook() {
+//    super.cook();
+//    print "Pipe full of crème pâtissière.";
+//  }
+//}

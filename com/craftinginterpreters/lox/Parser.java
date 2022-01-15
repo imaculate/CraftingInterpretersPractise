@@ -177,7 +177,7 @@ public class Parser {
             {
                 consume(IDENTIFIER, "Expect superclass name.");
                 superClasses.add(new Expr.Variable(previous()));
-            }while (match(LEFT_BRACE))
+            } while (match(COMMA));
             
         }
         consume(LEFT_BRACE, "Expect '{' before class body.");
@@ -189,7 +189,7 @@ public class Parser {
         }
         
         consume(RIGHT_BRACE, "Expect '}' after class body.");
-        return new Stmt.Class(name, superClass, methods);
+        return new Stmt.Class(name, superClasses, methods);
     }
 
     private Stmt.Function function(String kind)
