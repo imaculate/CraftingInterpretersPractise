@@ -41,6 +41,10 @@ class B < A {
   test() {
     super.method();
   }
+
+  test2() {
+    print "Testing from B";
+  }
 }
 
 class D
@@ -50,7 +54,7 @@ class D
   }
 }
 
-class C < B,D {}
+class C < D,B {}
 
 C().test2();
 
