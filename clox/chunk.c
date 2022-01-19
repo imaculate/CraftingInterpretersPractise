@@ -27,10 +27,21 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line)
     chunk->count++;
 }
 
-int addConstant(Chunk* chunk, Value value)
+long addConstant(Chunk* chunk, Value value)
 {
     writeValueArray(&chunk->constants, value);
     return chunk->constants.count - 1;
+}
+
+void writeConstant(Chunk* chunk, Value value, int line)
+{
+    long constant = addConstant(chunk, value);
+    writeChunk(chunk, OP_CONSTANT_LONG, line);
+    for (int i = 0; i < 3; i++)
+    {
+        writeChunk(chunk,  (uint8_t)constant, line);
+        constant >>= 8;
+    }
 }
 
 void freeChunk(Chunk* chunk)
