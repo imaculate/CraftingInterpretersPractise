@@ -44,6 +44,11 @@ void writeConstant(Chunk* chunk, Value value, int line)
     }
 }
 
+int getLine(Chunk* chunk, int offset)
+{
+    return chunk->lines[offset];
+}
+
 void freeChunk(Chunk* chunk)
 {
     FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);

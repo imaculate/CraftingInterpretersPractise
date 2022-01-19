@@ -22,5 +22,6 @@ void initChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
 void writeConstant(Chunk* chunk, Value value, int line);
 long addConstant(Chunk* chunk, Value value);
+int getLine(Chunk* chunk, int offset);
 void freeChunk(Chunk* chunk);
 #endif
