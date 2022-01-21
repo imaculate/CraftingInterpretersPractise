@@ -2,6 +2,7 @@
 #include "common.h"
 #include "vm.h"
 #include "debug.h"
+#include "memory.h"
 
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
@@ -16,6 +17,8 @@ VM vm;
 
 static void resetStack()
 {
+    vm.stackCapacity = 0;
+    vm.stack = NULL;
     vm.stackTop = vm.stack;
 }
 void initVM()
@@ -25,7 +28,8 @@ void initVM()
 
 void freeVM()
 {
-
+    FREE_ARRAY(Value, vm.stack, vm.stackCapacity);
+    resetStack();
 }
 
 Value readConstantLong()
@@ -79,7 +83,8 @@ static InterpretResult run()
             case OP_SUBTRACT: BINARY_OP(-); break;
             case OP_MULTIPLY: BINARY_OP(*); break;
             case OP_DIVIDE: BINARY_OP(/); break;
-            case OP_NEGATE: push(-pop()); break;
+            //case OP_NEGATE: push(-pop()); break;
+            case OP_NEGATE: *(vm.stackTop-1) = -(*(vm.stackTop-1)); break;
         }
     }
 }
@@ -93,6 +98,14 @@ InterpretResult interpret(Chunk* chunk)
 
 void push(Value value)
 {
+    int stackCount = vm.stackTop - vm.stack;
+    if (vm.stackCapacity <= stackCount)
+    {
+        int oldCapacity = vm.stackCapacity;
+        vm.stackCapacity = GROW_CAPACITY(oldCapacity);
+        vm.stack = GROW_ARRAY(Value, vm.stack, oldCapacity, vm.stackCapacity);
+        vm.stackTop = vm.stack + stackCount;
+    }
     *vm.stackTop = value;
     vm.stackTop++;
 }
