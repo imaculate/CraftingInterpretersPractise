@@ -82,28 +82,6 @@ int main(int argc, const char* argv[])
         fprintf(stderr, "Usage: clox [path]\n");
         exit(64);
     }
-    /*Chunk chunk;
-    initChunk(&chunk);
-    int constant = addConstant(&chunk, 1.2);
-    writeChunk(&chunk, OP_CONSTANT, 123);
-    writeChunk(&chunk, constant, 123);
-    writeConstant(&chunk, 13.14, 124);
-    constant = addConstant(&chunk, 3.4);
-    writeChunk(&chunk, OP_CONSTANT, 123);
-    writeChunk(&chunk, constant, 123);
-
-    writeChunk(&chunk, OP_ADD, 123);
-
-    constant = addConstant(&chunk, 5.6);
-    writeChunk(&chunk, OP_CONSTANT, 123);
-    writeChunk(&chunk, constant, 123);
-
-    writeChunk(&chunk, OP_DIVIDE, 123);
-    writeChunk(&chunk, OP_NEGATE, 125);
-    writeChunk(&chunk, OP_RETURN, 125);
-    disassembleChunk(&chunk, "test chunk");
-    interpret(&chunk);
-    freeChunk(&chunk);*/
     freeVM();
     return 0;
 }
