@@ -1,17 +1,24 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include "common.h"
 #include "compile.h"
 #include "vm.h"
 #include "debug.h"
 #include "memory.h"
+#include "value.h"
 
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
-#define BINARY_OP(op) \
+#define BINARY_OP(valueType, op) \
     do { \
-        double b = pop(); \
-        double a = pop(); \
-        push(a op b); \
+    if (!IS_NUMBER(peek(0))  || !IS_NUMBER(peek(1))) \
+    { \
+        runtimeError("Operands must be numbers."); \
+        return INTERPRET_RUNTIME_ERROR; \
+    } \
+    double b = AS_NUMBER(pop()); \
+    double a = AS_NUMBER(pop()); \
+    push(valueType(a op b)); \
     } while(false)
 
 VM vm;
@@ -22,6 +29,21 @@ static void resetStack()
     vm.stack = NULL;
     vm.stackTop = vm.stack;
 }
+
+static void runtimeError(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    fputs("\n", stderr);
+
+    size_t instruction = vm.ip - vm.chunk->code - 1;
+    int line = vm.chunk->lines[instruction];
+    fprintf(stderr, "[line %d] in script\n", line);
+    resetStack();
+}
+
 void initVM()
 {
     resetStack();
@@ -31,6 +53,31 @@ void freeVM()
 {
     FREE_ARRAY(Value, vm.stack, vm.stackCapacity);
     resetStack();
+}
+
+void push(Value value)
+{
+    int stackCount = vm.stackTop - vm.stack;
+    if (vm.stackCapacity <= stackCount)
+    {
+        int oldCapacity = vm.stackCapacity;
+        vm.stackCapacity = GROW_CAPACITY(oldCapacity);
+        vm.stack = GROW_ARRAY(Value, vm.stack, oldCapacity, vm.stackCapacity);
+        vm.stackTop = vm.stack + stackCount;
+    }
+    *vm.stackTop = value;
+    vm.stackTop++;
+}
+
+Value pop()
+{
+    vm.stackTop--;
+    return *vm.stackTop;
+}
+
+static Value peek(int distance)
+{
+    return vm.stackTop[-1-distance];
 }
 
 Value readConstantLong()
@@ -80,12 +127,17 @@ static InterpretResult run()
                 printf("\n");
                 return INTERPRET_OK;
             }
-            case OP_ADD:BINARY_OP(+); break;
-            case OP_SUBTRACT: BINARY_OP(-); break;
-            case OP_MULTIPLY: BINARY_OP(*); break;
-            case OP_DIVIDE: BINARY_OP(/); break;
-            //case OP_NEGATE: push(-pop()); break;
-            case OP_NEGATE: *(vm.stackTop-1) = -(*(vm.stackTop-1)); break;
+            case OP_ADD:BINARY_OP(NUMBER_VALUE, +); break;
+            case OP_SUBTRACT: BINARY_OP(NUMBER_VALUE, -); break;
+            case OP_MULTIPLY: BINARY_OP(NUMBER_VALUE, *); break;
+            case OP_DIVIDE: BINARY_OP(NUMBER_VALUE, /); break;
+            case OP_NEGATE:
+            if (!IS_NUMBER(peek(0)))
+            {
+                runtimeError("Operand must be a number.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            push(NUMBER_VALUE(-AS_NUMBER(pop())));
         }
     }
 }
@@ -109,24 +161,4 @@ InterpretResult interpret(const char* source)
     InterpretResult result = run();
     freeChunk(&chunk);
     return result;
-}
-
-void push(Value value)
-{
-    int stackCount = vm.stackTop - vm.stack;
-    if (vm.stackCapacity <= stackCount)
-    {
-        int oldCapacity = vm.stackCapacity;
-        vm.stackCapacity = GROW_CAPACITY(oldCapacity);
-        vm.stack = GROW_ARRAY(Value, vm.stack, oldCapacity, vm.stackCapacity);
-        vm.stackTop = vm.stack + stackCount;
-    }
-    *vm.stackTop = value;
-    vm.stackTop++;
-}
-
-Value pop()
-{
-    vm.stackTop--;
-    return *vm.stackTop;
 }
