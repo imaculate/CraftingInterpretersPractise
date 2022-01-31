@@ -32,8 +32,8 @@ typedef struct {
 #define AS_BOOL(value) (value).as.boolean
 #define AS_NUMBER(value) (value).as.number
 
-#define BOOL_VALUE(value) ((Value) { VAL_BOOL, {.boolean = value}})
-#define NIL_VALUE(value) ((Value)) {VAL_NIL, {.number = 0}})
+#define BOOL_VALUE(value)   ((Value) { VAL_BOOL, {.boolean = value}})
+#define NIL_VALUE           ((Value) {VAL_NIL, {.number = 0}})
 #define NUMBER_VALUE(value) ((Value) {VAL_NUMBER, {.number = value}})
 
 void initValueArray(ValueArray* array);

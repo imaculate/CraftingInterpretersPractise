@@ -80,6 +80,24 @@ static Value peek(int distance)
     return vm.stackTop[-1-distance];
 }
 
+static bool isFalsey(Value value)
+{
+    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+static bool valuesEqual(Value a, Value b)
+{
+    if (a.type != b.type) return false;
+    switch (a.type)
+    {
+        case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
+        case VAL_NIL: return true;
+        case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+        default: return false;
+    }
+    return false;
+}
+
 Value readConstantLong()
 {
     long index = 0;
@@ -127,10 +145,23 @@ static InterpretResult run()
                 printf("\n");
                 return INTERPRET_OK;
             }
+            case OP_NIL: push(NIL_VALUE); break;
+            case OP_TRUE: push(BOOL_VALUE(true)); break;
+            case OP_FALSE: push(BOOL_VALUE(false)); break;
             case OP_ADD:BINARY_OP(NUMBER_VALUE, +); break;
             case OP_SUBTRACT: BINARY_OP(NUMBER_VALUE, -); break;
             case OP_MULTIPLY: BINARY_OP(NUMBER_VALUE, *); break;
             case OP_DIVIDE: BINARY_OP(NUMBER_VALUE, /); break;
+            case OP_NOT: push(BOOL_VALUE(isFalsey(pop()))); break;
+            case OP_EQUAL:
+            {
+                Value b = pop();
+                Value a = pop();
+                push(BOOL_VALUE(valuesEqual(a, b)));
+                break;
+            }
+            case OP_GREATER: BINARY_OP(BOOL_VALUE, >); break;
+            case OP_LESS: BINARY_OP(BOOL_VALUE, <); break;
             case OP_NEGATE:
             if (!IS_NUMBER(peek(0)))
             {
