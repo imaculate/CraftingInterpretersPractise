@@ -1,11 +1,14 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
+
 #include "common.h"
 #include "compile.h"
 #include "vm.h"
 #include "debug.h"
 #include "memory.h"
 #include "value.h"
+#include "object.h"
 
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
@@ -47,10 +50,12 @@ static void runtimeError(const char* format, ...)
 void initVM()
 {
     resetStack();
+    vm.objects = NULL;
 }
 
 void freeVM()
 {
+    freeObjects();
     FREE_ARRAY(Value, vm.stack, vm.stackCapacity);
     resetStack();
 }
@@ -85,6 +90,21 @@ static bool isFalsey(Value value)
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
+static void concatenate()
+{
+    ObjString* b = AS_STRING(pop());
+    ObjString* a = AS_STRING(pop());
+
+    int length = a->length + b->length;
+    char* chars = ALLOCATE(char, length + 1);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars, b->chars, b->length);
+    chars[length] = '\0';
+
+    ObjString* result = takeString(chars, length);
+    push(OBJ_VALUE(result));
+}
+
 static bool valuesEqual(Value a, Value b)
 {
     if (a.type != b.type) return false;
@@ -93,6 +113,13 @@ static bool valuesEqual(Value a, Value b)
         case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
         case VAL_NIL: return true;
         case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+        case VAL_OBJ:
+        {
+            ObjString* aString = AS_STRING(a);
+            ObjString* bString = AS_STRING(b);
+            return aString->length == bString->length &&
+                memcmp(aString->chars, bString->chars, aString->length) == 0;
+        }
         default: return false;
     }
     return false;
@@ -148,7 +175,25 @@ static InterpretResult run()
             case OP_NIL: push(NIL_VALUE); break;
             case OP_TRUE: push(BOOL_VALUE(true)); break;
             case OP_FALSE: push(BOOL_VALUE(false)); break;
-            case OP_ADD:BINARY_OP(NUMBER_VALUE, +); break;
+            case OP_ADD: //BINARY_OP(NUMBER_VALUE, +); break;
+            {
+                if (IS_STRING(peek(0)) && IS_STRING(peek(1)))
+                {
+                    concatenate();
+                }
+                else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1)))
+                {
+                    double b = AS_NUMBER(pop());
+                    double a = AS_NUMBER(pop());
+                    push(NUMBER_VALUE(a + b));
+                }
+                else
+                {
+                    runtimeError("Operands must be two numbers or two strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_SUBTRACT: BINARY_OP(NUMBER_VALUE, -); break;
             case OP_MULTIPLY: BINARY_OP(NUMBER_VALUE, *); break;
             case OP_DIVIDE: BINARY_OP(NUMBER_VALUE, /); break;
