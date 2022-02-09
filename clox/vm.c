@@ -103,7 +103,7 @@ static void concatenate()
     int length = a->length + b->length;
     char* chars = ALLOCATE(char, length + 1);
     memcpy(chars, a->chars, a->length);
-    memcpy(chars, b->chars, b->length);
+    memcpy(chars + a->length, b->chars, b->length);
     chars[length] = '\0';
 
     ObjString* result = takeString(chars, length);
@@ -210,7 +210,7 @@ static InterpretResult run()
                 }
                 break;
             }
-            case OP_ADD: //BINARY_OP(NUMBER_VALUE, +); break;
+            case OP_ADD:
             {
                 if (IS_STRING(peek(0)) && IS_STRING(peek(1)))
                 {

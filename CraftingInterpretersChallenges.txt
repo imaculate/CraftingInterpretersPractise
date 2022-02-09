@@ -1,2 +1,3 @@
 - Ternary Operator
 - Avoid pushing strings constants to Values Array everytime they are accessed.
+- Understand how invalid assignment target works
