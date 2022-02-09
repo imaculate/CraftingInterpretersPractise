@@ -113,6 +113,7 @@ static void skipWhiteSpace()
         switch (c)
         {
             case ' ':
+            case '\r':
             case '\t':
                 advance();
                 break;
@@ -188,7 +189,8 @@ static TokenType identifierType()
 static Token identifier()
 {
     while (isAlpha(peek()) || isDigit(peek())) advance();
-    return makeToken(identifierType());
+    TokenType type = identifierType();
+    return makeToken(type);
 }
 
 Token scanToken()
@@ -197,10 +199,10 @@ Token scanToken()
     scanner.start = scanner.current;
     if (isAtEnd()) return makeToken(TOKEN_EOF);
 
-    char c = advance();
-    if (isAlpha(c)) return identifier();
-    if (isDigit(c)) return number();
-    switch(c)
+    char ch = advance();
+    if (isAlpha(ch)) return identifier();
+    if (isDigit(ch)) return number();
+    switch(ch)
     {
         case '(': return makeToken(TOKEN_LEFT_PAREN);
         case ')':return makeToken(TOKEN_RIGHT_PAREN);
