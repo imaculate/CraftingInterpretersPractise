@@ -76,12 +76,13 @@ bool tableSet(Table* table, ObjString* key, Value value)
 {
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD)
     {
+
         int capacity = GROW_CAPACITY(table->capacity);
         adjustCapacity(table, capacity);
     }
 
     Entry* entry = findEntry(table->entries, table->capacity, key);
-    bool isNewEntry = (entry->key != NULL);
+    bool isNewEntry = (entry->key == NULL);
     if (isNewEntry && IS_NIL(entry->value)) table->count++;
     entry->key = key;
     entry->value = value;
@@ -90,7 +91,10 @@ bool tableSet(Table* table, ObjString* key, Value value)
 
 bool tableGet(Table* table, ObjString* key, Value* value)
 {
-    if (table->count == 0) return false;
+    if (table->count == 0) 
+    {
+        return false;
+    }
     Entry* entry = findEntry(table->entries, table->capacity, key);
     if (entry->key == NULL) return false;
     *value = entry->value;
