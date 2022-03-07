@@ -34,9 +34,24 @@ ObjFunction* newFunction()
 {
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
     function->arity = 0;
+    function->upValueCount = 0;
     function->name = NULL;
     initChunk(&function->chunk);
     return function;
+}
+
+ObjClosure* newClosure(ObjFunction* function)
+{
+    ObjUpValue** upvalues = ALLOCATE(ObjUpValue*, function->upValueCount);
+    for (int i = 0; i < function->upValueCount; i++)
+    {
+        upvalues[i] = NULL;
+    }
+    ObjClosure* closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+    closure->upvalues = upvalues;
+    closure->upvalueCount = function->upValueCount;
+    closure->function = function;
+    return closure;
 }
 
 ObjNative* newNative(NativeFn function)
@@ -90,6 +105,13 @@ ObjString* takeString(const char* chars, int length)
     return allocateString(chars, length, hash);
 }
 
+ObjUpValue* newUpValue(Value* slot)
+{
+    ObjUpValue* upvalue = ALLOCATE_OBJ(ObjUpValue, OBJ_UPVALUE);
+    upvalue->location = slot;
+    return upvalue;
+}
+
 void printObject(Value value)
 {
     switch(OBJ_TYPE(value))
@@ -102,6 +124,12 @@ void printObject(Value value)
             break;
         case OBJ_NATIVE:
             printf("<native fn>");
+            break;
+        case OBJ_CLOSURE:
+            printFunction(AS_CLOSURE(value)->function);
+            break;
+        case OBJ_UPVALUE:
+            printf("upvalue");
             break;
     }
 }

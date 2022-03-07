@@ -45,7 +45,13 @@ typedef struct
 typedef struct {
     Token name;
     int depth;
+    bool isCaptured;
 } Local;
+
+typedef struct {
+    uint8_t index;
+    bool isLocal;
+} UpValue;
 
 typedef enum
 {
@@ -57,6 +63,7 @@ typedef struct Compiler {
     struct Compiler* enclosing;
     ObjFunction* function;
     FunctionType type;
+    UpValue upvalues[UINT8_COUNT];
 
     Local* locals;
     int localCapacity;
@@ -224,6 +231,7 @@ static void initCompiler(Compiler* compiler, FunctionType type)
     }
     Local* local = &compiler->locals[compiler->localCount++];
     local->depth = 0;
+    local->isCaptured = false;
     local->name.start = "";
     local->name.length = 0;
 }
@@ -260,7 +268,15 @@ static void endScope()
     while (current->localCount > 0
         && current->locals[current->localCount - 1].depth > current->scopeDepth)
     {
-        emitByte(OP_POP);
+        if (current->locals[current->localCount - 1].isCaptured)
+        {
+            emitByte(OP_CLOSE_UPVALUE);
+        }
+        else
+        {
+            emitByte(OP_POP);
+        }
+        
         current->localCount--;
     }
 }
@@ -299,6 +315,50 @@ static int resolveLocal(Compiler* compiler, Token* name)
     return -1;
 }
 
+static int addUpValue(Compiler* compiler, uint8_t index, bool isLocal)
+{
+    int upValueCount = compiler->function->upValueCount;
+
+    for (int i = 0; i < upValueCount; i++)
+    {
+        UpValue* upvalue = &compiler->upvalues[i];
+        if (upvalue->index == index && upvalue->isLocal == isLocal)
+        {
+            return i;
+        }
+    }
+
+    if (upValueCount == UINT8_COUNT)
+    {
+        error("Too many closure variables in function.");
+        return 0;
+    }
+
+    compiler->upvalues[upValueCount].isLocal = isLocal;
+    compiler->upvalues[upValueCount].index = index;
+    return compiler->function->upValueCount++;
+}
+
+static int resolveUpValue(Compiler* compiler, Token* name)
+{
+    if (compiler->enclosing == NULL) return -1;
+
+    int local = resolveLocal(compiler->enclosing, name);
+    if (local != -1)
+    {
+        compiler->enclosing->locals[local].isCaptured = true;
+        return addUpValue(compiler, (uint8_t)local, true);
+    }
+
+    int upvalue = resolveUpValue(compiler->enclosing, name);
+    if (upvalue != -1)
+    {
+        return addUpValue(compiler, (uint8_t)upvalue, false);
+    }
+
+    return -1;
+}
+
 static void addLocal(Token name)
 {
     /*if (current->localCount == UINT8_COUNT)
@@ -315,6 +375,7 @@ static void addLocal(Token name)
     Local* local = &current->locals[current->localCount++];
     local->name = name;
     local->depth = -1;
+    local->isCaptured = false;
 }
 
 static void declareVariable()
@@ -439,19 +500,29 @@ static void function(FunctionType type)
     block();
 
     ObjFunction* function = endCompiler();
-    emitBytes(OP_CONSTANT, makeConstant(OBJ_VALUE(function)));
+    emitBytes(OP_CLOSURE, makeConstant(OBJ_VALUE(function)));
+
+    for (int i = 0; i<function->upValueCount; i++)
+    {
+        emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
+        emitByte(compiler.upvalues[i].index);
+    }
 }
 
 static void funDeclaration()
 {
+    printf("Declaring function\n");
     uint8_t global = parseVariable("Expect function name.");
+    printf("Variable defined at %d", global);
     markInitialized();
     function(TYPE_FUNCTION);
     defineVariable(global);
+    printf("Completed declaring function\n");
 }
 
 static void varDeclaration()
 {
+    printf("Declaring variable\n");
     uint8_t global = parseVariable("Expect variable name.");
 
     if (match(TOKEN_EQUAL))
@@ -487,7 +558,7 @@ static void returnStatement()
     {
         error("Can't return from top-level code.");
     }
-    
+
     if (match(TOKEN_SEMICOLON))
     {
         emitReturn();
@@ -625,6 +696,7 @@ static void declaration()
 
 static void statement()
 {
+    printf("Stating statement\n");
     if (match(TOKEN_PRINT))
     {
         printStatement();
@@ -735,6 +807,11 @@ static void namedVariable(Token name, bool canAssign)
         getOp = OP_GET_LOCAL;
         setOp = OP_SET_LOCAL;
     }
+    else if ((arg = resolveUpValue(current, &name)) != -1)
+    {
+        getOp = OP_GET_UPVALUE;
+        setOp = OP_SET_UPVALUE;
+    }
     else
     {
         arg = identifierConstant(&name);
@@ -843,9 +920,11 @@ ObjFunction* compile(const char* source) {
     advance();
     while (!match(TOKEN_EOF))
     {
+        printf("Compiling yet another declaration\n");
         declaration();
     }
 
+    printf("End of tokens reached\n");
     ObjFunction* function = endCompiler();
     /*consume(TOKEN_EOF, "Expect end of expression.");
     freeCompiler(&compiler);*/
