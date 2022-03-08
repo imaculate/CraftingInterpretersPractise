@@ -33,6 +33,7 @@ static void resetStack()
     vm.stack = NULL;
     vm.stackTop = vm.stack;
     vm.frameCount = 0;
+    vm.openUpvalues = NULL;
 }
 
 static void runtimeError(const char* format, ...)
@@ -89,6 +90,10 @@ void initVM()
 {
     resetStack();
     vm.objects = NULL;
+    vm.grayCount = 0;
+    vm.grayCapacity = 0;
+    vm.grayStack = NULL;
+    
     initTable(&vm.strings);
     initTable(&vm.globals);
 
@@ -157,8 +162,9 @@ static bool callValue(Value callee, int argCount)
     {
         switch (OBJ_TYPE(callee))
         {
-            case OBJ_FUNCTION:
+            /*case OBJ_FUNCTION:
                 return call(AS_FUNCTION(callee), argCount);
+            */
             case OBJ_NATIVE:
             {
                 NativeFn native = AS_NATIVE(callee);
@@ -182,8 +188,41 @@ static bool callValue(Value callee, int argCount)
 
 static ObjUpValue* captureUpvalue(Value* local)
 {
+    ObjUpValue* preUpvalue = NULL;
+    ObjUpValue* upvalue = vm.openUpvalues;
+    while (upvalue != NULL && upvalue->location > local)
+    {
+        preUpvalue = upvalue;
+        upvalue = upvalue->next;
+    }
+
+    if (upvalue != NULL && upvalue->location == local) {
+        return upvalue;
+    }
+
     ObjUpValue* createdUpValue = newUpValue(local);
+    createdUpValue->next = upvalue;
+
+    if (preUpvalue == NULL)
+    {
+        vm.openUpvalues = createdUpValue;
+    }
+    else
+    {
+        preUpvalue->next = createdUpValue;
+    }
     return createdUpValue;
+}
+
+static void closeUpvalues(Value* last)
+{
+    while (vm.openUpvalues != NULL && vm.openUpvalues->location >= last)
+    {
+        ObjUpValue* upvalue = vm.openUpvalues;
+        upvalue->closed = *upvalue->location;
+        upvalue->location = &upvalue->closed;
+        vm.openUpvalues = upvalue->next;
+    }
 }
 
 static bool isFalsey(Value value)
@@ -325,6 +364,7 @@ static InterpretResult run()
             }
             case OP_RETURN: {
                 Value result = pop();
+                closeUpvalues(frame->slots);
                 vm.frameCount--;
                 if (vm.frameCount == 0)
                 {
@@ -343,7 +383,8 @@ static InterpretResult run()
             case OP_POP: pop(); break;
             case OP_CLOSE_UPVALUE:
             {
-                Value local = pop();
+                closeUpvalues(vm.stackTop - 1);
+                pop();
                 break;
             }
             case OP_GET_LOCAL:

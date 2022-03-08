@@ -23,8 +23,12 @@ typedef struct vm
     Value* stackTop;
     Obj* objects;
     Table strings;
+    ObjUpValue* openUpvalues;
     Table globals;
     int stackCapacity;
+    int grayCapacity;
+    int grayCount;
+    Obj** grayStack;
 } VM;
 
 typedef enum {
