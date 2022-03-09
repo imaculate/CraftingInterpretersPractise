@@ -66,6 +66,13 @@ ObjNative* newNative(NativeFn function)
     return native;
 }
 
+ObjClass* newClass(ObjString* name)
+{
+    ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
+    klass->name = name;
+    return klass;
+}
+
 static ObjString* allocateString(char* chars, int length, uint32_t hash)
 {
     ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
@@ -135,6 +142,9 @@ void printObject(Value value)
             break;
         case OBJ_NATIVE:
             printf("<native fn>");
+            break;
+        case OBJ_CLASS:
+            printf("%s", AS_CLASS(value)->name->chars);
             break;
         case OBJ_CLOSURE:
             printFunction(AS_CLOSURE(value)->function);
