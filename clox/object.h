@@ -18,6 +18,7 @@
 #define AS_CSTRING(value) (((ObjString*) AS_OBJ(value))->chars)
 #define AS_FUNCTION(value) ((ObjFunction*) AS_OBJ(value))
 #define AS_CLASS(value) ((ObjClass*) AS_OBJ(value))
+#define AS_INSTANCE(value) ((ObjInstance*) AS_OBJ(value))
 #define AS_NATIVE(value) \
     (((ObjNative*)AS_OBJ(value))->function)
 
@@ -87,6 +88,7 @@ typedef struct {
 ObjClass* newClass(ObjString* name);
 ObjClosure* newClosure(ObjFunction* function);
 ObjFunction* newFunction();
+ObjInstance* newInstance(ObjClass* klass);
 ObjNative* newNative(NativeFn function);
 ObjString* copyString(const char* chars, int length);
 ObjString* takeString(const char* chars, int length);
