@@ -18,3 +18,7 @@ Ideally, we’d keep the ip in a native CPU register. C doesn’t let us require
 Wrapping every ObjFunction in an ObjClosure introduces a level of indirection that has a performance cost. That cost isn’t necessary for functions that do not close over any variables, but it does let the runtime treat all calls uniformly.
 
 Change clox to only wrap functions in ObjClosures that need upvalues. How does the code complexity and performance compare to always wrapping functions? Take care to benchmark programs that do and do not use closures. How should you weight the importance of each benchmark? If one gets slower and one faster, how do you decide what trade-off to make to choose an implementation strategy?
+
+Research how Ruby allows "open" classes that can be modified after the fact.
+
+Make Lox favor supermethods by default and then user inner() [opposite of super()]to call subclass methods.
