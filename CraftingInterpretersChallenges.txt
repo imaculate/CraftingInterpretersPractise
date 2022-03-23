@@ -2,3 +2,19 @@
 - Avoid pushing strings constants to Values Array everytime they are accessed.
 - Understand how invalid assignment target works
 - Implement constant/final variables
+-implement switch/case
+
+switchStmt     → "switch" "(" expression ")"
+                 "{" switchCase* defaultCase? "}" ;
+switchCase     → "case" expression ":" statement* ;
+defaultCase    → "default" ":" statement* ;
+
+- Implement continue
+- Design a new control flow statement
+Reading and writing the ip field is one of the most frequent operations inside the bytecode loop. Right now, we access it through a pointer to the current CallFrame. That requires a pointer indirection which may force the CPU to bypass the cache and hit main memory. That can be a real performance sink.
+
+Ideally, we’d keep the ip in a native CPU register. C doesn’t let us require that without dropping into inline assembly, but we can structure the code to encourage the compiler to make that optimization. If we store the ip directly in a C local variable and mark it register, there’s a good chance the C compiler will accede to our polite request.
+
+Wrapping every ObjFunction in an ObjClosure introduces a level of indirection that has a performance cost. That cost isn’t necessary for functions that do not close over any variables, but it does let the runtime treat all calls uniformly.
+
+Change clox to only wrap functions in ObjClosures that need upvalues. How does the code complexity and performance compare to always wrapping functions? Take care to benchmark programs that do and do not use closures. How should you weight the importance of each benchmark? If one gets slower and one faster, how do you decide what trade-off to make to choose an implementation strategy?
