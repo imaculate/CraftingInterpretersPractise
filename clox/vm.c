@@ -328,6 +328,13 @@ static void concatenate()
 
 static bool valuesEqual(Value a, Value b)
 {
+#ifdef NAN_BOXING
+    if (IS_NUMBER(a) && IS_NUMBER(b))
+    {
+        return AS_NUMBER(a) == AS_NUMBER(b);
+    }
+    return a == b;
+#else
     if (a.type != b.type) return false;
     switch (a.type)
     {
@@ -338,6 +345,7 @@ static bool valuesEqual(Value a, Value b)
         default: return false;
     }
     return false;
+#endif
 }
 
 Value readConstantLong()

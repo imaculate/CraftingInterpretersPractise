@@ -22,3 +22,9 @@ Change clox to only wrap functions in ObjClosures that need upvalues. How does t
 Research how Ruby allows "open" classes that can be modified after the fact.
 
 Make Lox favor supermethods by default and then user inner() [opposite of super()]to call subclass methods.
+
+Fire up your profiler, run a couple of benchmarks, and look for other hotspots in the VM. Do you see anything in the runtime that you can improve?
+
+Many strings in real-world user programs are small, often only a character or two. This is less of a concern in clox because we intern strings, but most VMs don’t. For those that don’t, heap allocating a tiny character array for each of those little strings and then representing the value as a pointer to that array is wasteful. Often, the pointer is larger than the string’s characters. A classic trick is to have a separate value representation for small strings that stores the characters inline in the value.
+
+Starting from clox’s original tagged union representation, implement that optimization. Write a couple of relevant benchmarks and see if it helps.
