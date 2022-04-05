@@ -4,14 +4,6 @@ fun areWeHavingItYet() {
 
 print areWeHavingItYet;
 
-fun a() { b(); }
-fun b() { c(); }
-fun c() {
-  c("too", "many");
-}
-
-a();
-
 fun fib(n) {
     if (n < 2) return n;
     return fib(n-2) + fib(n-1);
@@ -28,6 +20,6 @@ point = (x, y) -> method ->
             set("x", newx) -> x = newx
             set("y", newy) -> y = newy
             "add" -> (pt) -> point(x + pt.x, y + pt.y)
-    p = point(1, 2)
-    p.x = 5
-    print p.add(point(3, 4))
+p = point(1, 2)
+p.x = 5
+print p.add(point(3, 4))

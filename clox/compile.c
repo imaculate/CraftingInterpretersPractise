@@ -237,12 +237,13 @@ static void initCompiler(Compiler* compiler, FunctionType type)
         current->function->name = copyString(parser.previous.start, parser.previous.length);
     }
 
-    if (compiler->localCapacity <= compiler->localCount)
-    {
-        int oldCapacity = compiler->localCapacity;
-        compiler->localCapacity = GROW_CAPACITY(oldCapacity);
-        compiler->locals = GROW_ARRAY(Local, compiler->locals, oldCapacity, compiler->localCapacity);
-    }
+    printf("Compiling function, old localcapacity %d ... \n", compiler->localCapacity);
+
+    int oldCapacity = 0;
+    compiler->localCapacity = GROW_CAPACITY(oldCapacity);
+    compiler->locals = GROW_ARRAY(Local, compiler->locals, oldCapacity, compiler->localCapacity);
+
+    printf("Allocated capacity to %d... \n", compiler->localCapacity);
     Local* local = &compiler->locals[compiler->localCount++];
     local->depth = 0;
     local->isCaptured = false;
@@ -584,7 +585,7 @@ static Token syntheticToken(const char* text)
 
 static void namedVariable(Token name, bool canAssign)
 {
-    fprintf(stdout, "Accessing named variable");
+    fprintf(stdout, "Accessing named variable ... \n");
     uint8_t getOp, setOp;
     int arg = resolveLocal(current, &name);
     if (arg != -1)
@@ -751,8 +752,10 @@ static void block()
 
 static void function(FunctionType type)
 {
+    printf("Compiling function type %d ... \n", type);
     Compiler compiler;
     initCompiler(&compiler, type);
+    printf("Initialised compiler, beginning scope ... \n");
     beginScope();
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
@@ -770,13 +773,17 @@ static void function(FunctionType type)
             defineVariable(constant);
         } while(match(TOKEN_COMMA));
     }
+    printf("After left paren ... \n");
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+    printf("After right paren ... \n");
     consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+    printf("Finished function header starting body ... \n");
     block();
 
     ObjFunction* function = endCompiler();
     emitBytes(OP_CLOSURE, makeConstant(OBJ_VALUE(function)));
 
+    printf("Finished function, emitting upvalues... \n");
     for (int i = 0; i<function->upValueCount; i++)
     {
         emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
@@ -852,7 +859,7 @@ static void funDeclaration()
 {
     printf("Declaring function\n");
     uint8_t global = parseVariable("Expect function name.");
-    printf("Variable defined at %d", global);
+    printf("Function name defined at %d \n", global);
     markInitialized();
     function(TYPE_FUNCTION);
     defineVariable(global);
