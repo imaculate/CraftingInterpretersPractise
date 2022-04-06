@@ -46,7 +46,7 @@ void printValue(Value value)
     }
     else if (IS_NUMBER(value))
     {
-        printf("%g", AS_NUMBER(value));
+        printf("A number: %g", AS_NUMBER(value));
     }
 #else
     switch (value.type)
@@ -55,7 +55,7 @@ void printValue(Value value)
             printf(AS_BOOL(value) ? "true" : "false");
             break;
         case VAL_NIL: printf("nil"); break;
-        case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
+        case VAL_NUMBER: printf("A number: %g", AS_NUMBER(value)); break;
         case VAL_OBJ: printObject(value); break;
     }
 #endif

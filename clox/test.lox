@@ -3,6 +3,7 @@ fun areWeHavingItYet() {
 }
 
 print areWeHavingItYet;
+print areWeHavingItYet();
 
 fun fib(n) {
     if (n < 2) return n;
@@ -10,16 +11,18 @@ fun fib(n) {
 }
 
 var start = clock();
-print fib(35);
+print "Starting time: ";
+print start;
+print fib(3);
 print clock() - start;
 
-point = (x, y) -> method ->
-        match method:
-            "x" -> x
-            "y" -> y
-            set("x", newx) -> x = newx
-            set("y", newy) -> y = newy
-            "add" -> (pt) -> point(x + pt.x, y + pt.y)
-p = point(1, 2)
-p.x = 5
-print p.add(point(3, 4))
+// point = (x, y) -> method ->
+//        match method:
+//            "x" -> x
+//            "y" -> y
+//            set("x", newx) -> x = newx
+//            set("y", newy) -> y = newy
+//            "add" -> (pt) -> point(x + pt.x, y + pt.y)
+// p = point(1, 2)
+// p.x = 5
+// print p.add(point(3, 4))

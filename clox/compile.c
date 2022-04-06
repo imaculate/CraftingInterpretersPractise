@@ -662,7 +662,7 @@ static void super_(bool canAssign)
 }
 
 ParseRule rules[] = {
-  [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_NONE},
+  [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_CALL},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, 
   [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
@@ -911,7 +911,7 @@ static void returnStatement()
     }
     else
     {
-        if (current->type = TYPE_INITIALIZER)
+        if (current->type == TYPE_INITIALIZER)
         {
             error("Can't return a value from an initializer.");
         }
@@ -1050,7 +1050,6 @@ static void declaration()
 
 static void statement()
 {
-    printf("Stating statement\n");
     if (match(TOKEN_PRINT))
     {
         printStatement();
